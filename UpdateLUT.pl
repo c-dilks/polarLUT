@@ -79,8 +79,8 @@ foreach $line (<POL_TMP>) {
 if($debug) {
   print("\n\nopening vimdiff to check to see if I filled zeroes in properly...\n");
   print("+/- symbols and nan's filtered out later\n");
-  sleep 3;
-  system("vimdiff polarimetry.dat{,.tmp}");
+  #sleep 3;
+  #system("vimdiff polarimetry.dat{,.tmp}");
 }
 close(POL);
 
