@@ -2,7 +2,7 @@
 use Data::Dumper;
 use Switch;
 
-my $debug=1;
+my $debug=0;
 
 # get year number
 if($#ARGV!=0) {
@@ -79,8 +79,8 @@ foreach $line (<POL_TMP>) {
 if($debug) {
   print("\n\nopening vimdiff to check to see if I filled zeroes in properly...\n");
   print("+/- symbols and nan's filtered out later\n");
-  #sleep 3;
-  #system("vimdiff polarimetry.dat{,.tmp}");
+  sleep 3;
+  system("vimdiff polarimetry.dat{,.tmp}");
 }
 close(POL);
 
@@ -213,7 +213,7 @@ foreach $line (<FILLS>) {
 
 
     print(OUT "$run_idx $fillnum $runnum $st $BluePol $BlueAvg $YellPol $YellAvg");
-    if($debug) {
+    if($debug or 1) {
       print(OUT " $t $mt $et $BlueP0 $BlueP1 $YellP0 $YellP1");
     }
     print(OUT "\n");
@@ -224,7 +224,7 @@ foreach $line (<FILLS>) {
 close(OUT);
 
 my $rootfile = "pol_${year}.root";
-system("root -b -q -l BuildTree.C'(${debug},\"${rootfile}\")'");
+system("root -b -q -l BuildTree.C'(1,\"${rootfile}\")'");
 
 system("mv fills.list times.list ${storage_dir}/");
 system("mv polarimetry.dat.tmp polarimetry.dat polar_by_run.dat ${storage_dir}/");
