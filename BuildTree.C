@@ -1,7 +1,6 @@
 void BuildTree(Int_t debug=0, 
-               Int_t year=12,
+               TString outfile_n = "pol_12.root",
                TString filename = "polar_by_run.dat") {
-  TString outfile_n = Form("pol_%d.root",year);
   TFile * outfile = new TFile(outfile_n.Data(),"RECREATE");
   TTree * poltr = new TTree();
   TString treestr =

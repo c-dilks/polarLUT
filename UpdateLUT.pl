@@ -1,33 +1,39 @@
 #!/usr/bin/perl -w
 use Data::Dumper;
+use Switch;
 
 my $debug=1;
 
-
+# get year number
 if($#ARGV!=0) {
   print "specify year (12,13,etc.) as argument\n";
   exit;
 }
 my $year = $ARGV[0];
 
-# SQL server coordinates
+# set SQL server coordinates
 my $sqlhost;
 my $sqlport;
 my $sqlcmd;
 my $url;
-if($year==12) {
-  $sqlhost="dbbak.starp.bnl.gov";
-  $sqlport=3411;
-  $sqlcmd="mysql --host ${sqlhost} --port ${sqlport} RunLog -N -e";
-  $url="https://wiki.bnl.gov/rhicspin/Run_12_polarization";
-} elsif($year==13) {
-  $sqlhost="dbbak.starp.bnl.gov";
-  $sqlport=3412;
-  $sqlcmd="mysql --host ${sqlhost} --port ${sqlport} RunLog -N -e";
-  $url="https://wiki.bnl.gov/rhicspin/Run_13_polarization";
-} else {
-  print("unknown year, terminating\n");
-  exit;
+
+switch($year) {
+  case 12 {
+    $sqlhost="dbbak.starp.bnl.gov";
+    $sqlport=3411;
+    $sqlcmd="mysql --host ${sqlhost} --port ${sqlport} RunLog -N -e";
+    $url="https://wiki.bnl.gov/rhicspin/Run_12_polarization";
+  }
+  case 13 {
+    $sqlhost="dbbak.starp.bnl.gov";
+    $sqlport=3412;
+    $sqlcmd="mysql --host ${sqlhost} --port ${sqlport} RunLog -N -e";
+    $url="https://wiki.bnl.gov/rhicspin/Run_13_polarization";
+  }
+  else {
+    print("unknown year, terminating\n");
+    exit;
+  }
 }
 
 my $storage_dir="data_${year}";
@@ -47,14 +53,18 @@ open(FILLS,"fills.list") or die("fills.list not found");
 
 # obtain polarimetry data table
 system("curl ${url}  > polarimetry.html");
-system("grep -A5000 \"<pre>\" polarimetry.html | grep -B5000 \"</pre>\" | grep 1 > polarimetry.dat.tmp");
+system("grep -A5000 \"<pre>\" polarimetry.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
 open(POL_TMP,"polarimetry.dat.tmp") or die("polarimetry.dat.tmp not found");
 open(POL,"> polarimetry.dat");
 
 # some cells are empty in the data table; this block puts zeroes there and then opens
 # the patched file together with the original data table in vimdiff for comparison; make
 # sure it looks ok before proceeding!
-@char_idxes = (39,48,56,65,73,82,90,99,107,116,125,133);
+my @char_idxes;
+switch($year) {
+  case 12 { @char_idxes = (39,48,56,65,73,82,90,99,107,116,125,133); }
+  case 13 { @char_idxes = (50,59,67,76,84,93,101,110,118,127,135,144); }
+}
 foreach $line (<POL_TMP>) {
   chomp($line);
   my ($fill, $trash) = split " ",$line, 2;
@@ -66,9 +76,12 @@ foreach $line (<POL_TMP>) {
   }
   print(POL "$line\n");
 }
-#print("opening vimdiff to check to see if I filled zeroes in properly...\n");
-#sleep 3;
-#system("vimdiff polarimetry.dat{,.tmp}");
+if($debug) {
+  print("\n\nopening vimdiff to check to see if I filled zeroes in properly...\n");
+  print("+/- symbols and nan's filtered out later\n");
+  sleep 3;
+  system("vimdiff polarimetry.dat{,.tmp}");
+}
 close(POL);
 
 
@@ -107,12 +120,19 @@ foreach $line (<TIMES>) {
 #  sample of accessing polarimetry data for a particular fill:
 #  print("BlueAvg for fill $fill is $pol_of_fill{$fill}[$kBlueAvg]\n");
 my %pol_of_fill; # fill number -> polarimetry data vector
+my $pol_data_length;
+switch($year) {
+  case 12 {$pol_data_length=15;}
+  case 13 {$pol_data_length=16;}
+}
 # polarimetry data vector indices:
   my $ii=0;
 
   my $kFill=$ii++; # = 0
   my $kBeamE=$ii++;
   my $kStartT=$ii++;
+  my $kEndT=-1;
+  if($year==13) { $kEndT=$ii++;} # extra (and unused) column in run13
   my $kBlueAvg=$ii++;
   my $kBlueAvgErr=$ii++;
   my $kBlueP0=$ii++;
@@ -124,7 +144,7 @@ my %pol_of_fill; # fill number -> polarimetry data vector
   my $kYellP0=$ii++;
   my $kYellP0Err=$ii++;
   my $kYellP1=$ii++;
-  my $kYellP1Err=$ii++; # = 14
+  my $kYellP1Err=$ii++; # = 14 for run12, 15 for run13
 
 # build
 open(POLDATA,"polarimetry.dat");
@@ -132,9 +152,15 @@ print "building polarimetry hash table...\n";
 foreach $line (<POLDATA>) {
   my ($fill, $trash) = split " ",$line, 2;
   $line =~ s/\+-//g;
+  $line =~ s/\+\/-//g;
+  $line =~ s/nan//g;
   my @pol_data = split " ", $line;
+
+  #print "$line\n";
+  #print Dumper(\@pol_data);
+
   $pol_of_fill{$fill} = \@pol_data;
-  if ( scalar @pol_data != 15 ) {
+  if ( scalar @pol_data != $pol_data_length ) {
     print "ERROR: fill $fill not formatted properly in polarimetry.dat\n";
   }
 }
@@ -197,10 +223,11 @@ foreach $line (<FILLS>) {
 }
 close(OUT);
 
-system("root -b -q -l BuildTree.C'(${debug})'");
+my $rootfile = "pol_${year}.root";
+system("root -b -q -l BuildTree.C'(${debug},\"${rootfile}\")'");
 
-system("mv fills.list times.list $storage_dir/");
-system("mv polarimetry.dat.tmp polarimetry.dat polar_by_run.dat $storage_dir/");
+system("mv fills.list times.list ${storage_dir}/");
+system("mv polarimetry.dat.tmp polarimetry.dat polar_by_run.dat ${storage_dir}/");
 system("rm polarimetry.html");
 
-print("pol_${year}.root created; data files stored in $storage_dir\n");
+print("${rootfile} created; data files stored in ${storage_dir}\n");
