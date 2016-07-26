@@ -203,6 +203,10 @@ foreach $line (<FILLS>) {
     $BluePol = $BlueP0 + ($t * $BlueP1);
     $BlueAvg = $pol_data[$kBlueAvg];
     $BlueDiff = $BluePol - $BlueAvg;
+    if(abs($BlueP0)<1 or abs($BlueP1)<0.001) {
+      $BluePol = 0.0;
+    }
+    
 
     # yellow polarization
     $YellP0 = $pol_data[$kYellP0];
@@ -210,6 +214,9 @@ foreach $line (<FILLS>) {
     $YellPol = $YellP0 + ($t * $YellP1);
     $YellAvg = $pol_data[$kYellAvg];
     $YellDiff = $YellPol - $YellAvg;
+    if(abs($YellP0)<1 or abs($YellP1)<0.001) {
+      $YellPol = 0.0;
+    }
 
 
     print(OUT "$run_idx $fillnum $runnum $st $BluePol $BlueAvg $YellPol $YellAvg");
