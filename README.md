@@ -1,7 +1,11 @@
 # polarLUT
 generalized polarimetery LUT
 
+## setup
+build symlinks to list of good runs
+- `for y in {12,13}; do ln -s /star/u/dilks/trgmon${y}/500/goodruns.dat goodruns_${y}.dat; done`
 
+## running
 just execute `UpdateLUT.pl [$year=12 or 13]`
 
 

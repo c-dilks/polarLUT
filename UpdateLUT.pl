@@ -4,6 +4,10 @@ use Switch;
 
 my $debug=0;
 
+# if =1, use only runs in goodruns_${year}.dat
+# otherwise if =0, use all runs found in DB
+my $filter_goodruns=1;
+
 # get year number
 if($#ARGV!=0) {
   print "specify year (12,13,etc.) as argument\n";
@@ -37,6 +41,7 @@ switch($year) {
 }
 
 my $storage_dir="data_${year}";
+my $goodruns_file="goodruns_${year}.dat";
 system("mkdir -p $storage_dir");
 
 
@@ -49,6 +54,15 @@ open(TIMES,"times.list") or die("times.list not found");
 open(FILLS,"fills.list") or die("fills.list not found");
 
 
+# read in list of good runs
+my @goodruns;
+open(GOOD,$goodruns_file) or die("${goodruns_file} not found");
+foreach $line (<GOOD>) {
+  chomp($line);
+  my ($goodrun, $trash) = split " ",$line, 2;
+  push(@goodruns,$goodrun);
+}
+#print Dumper(\@goodruns);
 
 
 # obtain polarimetry data table
@@ -185,47 +199,61 @@ my $YellDiff;
 my $run_idx=0;
 open(OUT,"> polar_by_run.dat");
 seek(FILLS,0,0);
+my $exe;
 foreach $line (<FILLS>) {
   my ($runnum, $fillnum) = split " ", $line;
   $fillnum = int($fillnum);
-  if(exists $pol_of_fill{$fillnum}) {
-    @pol_data = @{$pol_of_fill{$fillnum}};
 
-    # time elapsed from beginning of fill (in hours)
-    $st = $start_of_run{$runnum};
-    $mt = $mid_of_run{$runnum};
-    $et = $end_of_run{$runnum};
-    $t = ($mt - $pol_data[$kStartT]) / 3600.0;
-    
-    # blue polarization
-    $BlueP0 = $pol_data[$kBlueP0];
-    $BlueP1 = $pol_data[$kBlueP1];
-    $BluePol = $BlueP0 + ($t * $BlueP1);
-    $BlueAvg = $pol_data[$kBlueAvg];
-    $BlueDiff = $BluePol - $BlueAvg;
-    if(abs($BlueP0)<1 or abs($BlueP1)<0.001) {
-      $BluePol = 0.0;
+  # goodruns filter
+  if($filter_goodruns==1) {
+    $exe = (grep {$runnum eq $_} @goodruns) ? 1:0;
+  } elsif($filter_goodruns==0) {
+    $exe = 1;
+  } else {
+    print "ERROR: \$filter_goodruns must be 0 or 1\n";
+    exit;
+  }
+
+  if($exe==1) {
+    if(exists $pol_of_fill{$fillnum}) {
+      @pol_data = @{$pol_of_fill{$fillnum}};
+
+      # time elapsed from beginning of fill (in hours)
+      $st = $start_of_run{$runnum};
+      $mt = $mid_of_run{$runnum};
+      $et = $end_of_run{$runnum};
+      $t = ($mt - $pol_data[$kStartT]) / 3600.0;
+      
+      # blue polarization
+      $BlueP0 = $pol_data[$kBlueP0];
+      $BlueP1 = $pol_data[$kBlueP1];
+      $BluePol = $BlueP0 + ($t * $BlueP1);
+      $BlueAvg = $pol_data[$kBlueAvg];
+      $BlueDiff = $BluePol - $BlueAvg;
+      if(abs($BlueP0)<1 or abs($BlueP1)<0.001) {
+        $BluePol = 0.0;
+      }
+      
+
+      # yellow polarization
+      $YellP0 = $pol_data[$kYellP0];
+      $YellP1 = $pol_data[$kYellP1];
+      $YellPol = $YellP0 + ($t * $YellP1);
+      $YellAvg = $pol_data[$kYellAvg];
+      $YellDiff = $YellPol - $YellAvg;
+      if(abs($YellP0)<1 or abs($YellP1)<0.001) {
+        $YellPol = 0.0;
+      }
+
+
+      print(OUT "$run_idx $fillnum $runnum $st $BluePol $BlueAvg $YellPol $YellAvg");
+      if($debug or 1) {
+        print(OUT " $t $mt $et $BlueP0 $BlueP1 $YellP0 $YellP1");
+      }
+      print(OUT "\n");
+
+      $run_idx++;
     }
-    
-
-    # yellow polarization
-    $YellP0 = $pol_data[$kYellP0];
-    $YellP1 = $pol_data[$kYellP1];
-    $YellPol = $YellP0 + ($t * $YellP1);
-    $YellAvg = $pol_data[$kYellAvg];
-    $YellDiff = $YellPol - $YellAvg;
-    if(abs($YellP0)<1 or abs($YellP1)<0.001) {
-      $YellPol = 0.0;
-    }
-
-
-    print(OUT "$run_idx $fillnum $runnum $st $BluePol $BlueAvg $YellPol $YellAvg");
-    if($debug or 1) {
-      print(OUT " $t $mt $et $BlueP0 $BlueP1 $YellP0 $YellP1");
-    }
-    print(OUT "\n");
-
-    $run_idx++;
   }
 }
 close(OUT);

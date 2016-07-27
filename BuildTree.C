@@ -75,6 +75,8 @@ void BuildTree(Int_t debug=0,
   // draw
   gStyle->SetOptStat(0);
   Int_t width_factor = zoom ? 1:10;
+  width_factor = 1; // override, since goodruns.dat filter reduces 
+                    // number of runs to ~1000
   TString png_name = zoom ? "canv_blue_zoomed_":"canv_blue_full_";
   png_name = png_name + outfile_n;
   png_name.ReplaceAll("root","png");
