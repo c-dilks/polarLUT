@@ -8,12 +8,22 @@ my $debug=0;
 # otherwise if =0, use all runs found in DB
 my $filter_goodruns=1;
 
+# default trigger to use for lumi
+my $def_trigger = "JP2";
+
 # get year number
-if($#ARGV!=0) {
-  print "specify year (12,13,etc.) as argument\n";
+my $year;
+my $trigger;
+if($#ARGV==0 or $#ARGV==1) {
+  $year = $ARGV[0];
+  if($#ARGV==1) { $trigger = $ARGV[1]; }
+  else { $trigger = $def_trigger; }
+} else {
+  print "specify year (12,13,etc.) as argument (and also optionally an FMS trigger for lumi calculation (default=${def_trigger}))\n";
   exit;
-}
-my $year = $ARGV[0];
+} 
+print "year=$year trigger=$trigger\n\n";
+
 
 # set SQL server coordinates
 my $sqlhost;
@@ -50,13 +60,13 @@ system("${sqlcmd} \"SELECT runNumber,startRunTime,endRunTime FROM runDescriptor\
 system("${sqlcmd} \"SELECT runNumber,blueFillNumber FROM beamInfo\" | uniq > fills.list");
 
 # open data tables
-open(TIMES,"times.list") or die("times.list not found");
-open(FILLS,"fills.list") or die("fills.list not found");
+open(TIMES,"times.list") or die("ERROR: times.list not found");
+open(FILLS,"fills.list") or die("ERROR: fills.list not found");
 
 
 # read in list of good runs
 my @goodruns;
-open(GOOD,$goodruns_file) or die("${goodruns_file} not found");
+open(GOOD,$goodruns_file) or die("ERROR: ${goodruns_file} not found");
 foreach $line (<GOOD>) {
   chomp($line);
   my ($goodrun, $trash) = split " ",$line, 2;
@@ -68,7 +78,7 @@ foreach $line (<GOOD>) {
 # obtain polarimetry data table
 system("curl ${url}  > polarimetry.html");
 system("grep -A5000 \"<pre>\" polarimetry.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
-open(POL_TMP,"polarimetry.dat.tmp") or die("polarimetry.dat.tmp not found");
+open(POL_TMP,"polarimetry.dat.tmp") or die("ERROR: polarimetry.dat.tmp not found");
 open(POL,"> polarimetry.dat");
 
 # some cells are empty in the data table; this block puts zeroes there and then opens
@@ -245,9 +255,7 @@ foreach $line (<FILLS>) {
 
 
       print(OUT "$run_idx $fillnum $runnum $st $BluePol $BlueAvg $YellPol $YellAvg");
-      if($debug or 1) {
-        print(OUT " $t $mt $et $BlueP0 $BlueP1 $YellP0 $YellP1");
-      }
+      print(OUT " $t $mt $et $BlueP0 $BlueP1 $YellP0 $YellP1");
       print(OUT "\n");
 
       $run_idx++;
@@ -256,11 +264,14 @@ foreach $line (<FILLS>) {
 }
 close(OUT);
 
+# compute luminosity-weighted polarizations
+system("AppendLumiData.pl ${year} ${trigger}");
+
 my $rootfile = "pol_${year}.root";
-system("root -b -q -l BuildTree.C'(1,\"${rootfile}\")'");
+system("root -b -q -l BuildTree.C'(\"${rootfile}\",\"polar_by_run_with_lumi.dat\")'");
 
 system("mv fills.list times.list ${storage_dir}/");
-system("mv polarimetry.dat.tmp polarimetry.dat polar_by_run.dat ${storage_dir}/");
+system("mv polarimetry.dat.tmp polarimetry.dat polar_by_run.dat polar_by_run_with_lumi.dat ${storage_dir}/");
 system("rm polarimetry.html");
 
 print("${rootfile} created; data files stored in ${storage_dir}\n");
