@@ -26,10 +26,22 @@ switch($year) {
   }
 }
 
+
+# first, determine for which runs we have polarimetry measurements, so that we
+# which runs' luminosities to add together to determine the per-fill lumi
+open(POLDATA,"polar_by_run.dat") or die("ERROR: polar_by_run.dat not found\n");
+my @runlist;
+foreach $line (<POLDATA>) {
+  chomp($line);
+  my @arr = split " ", $line;
+  push(@runlist,$arr[2]);
+}
+#print Dumper(\@runlist);
+
+
 # open lumi file
 $lumifile = $lumidir."/lum_perrun_FMS${trigger}.txt";
 open(LUMI,$lumifile) or die("ERROR: $lumifile does not exist");
-
 
 # columns of luminosity tables:
 #   0: Run
@@ -45,7 +57,7 @@ open(LUMI,$lumifile) or die("ERROR: $lumifile does not exist");
 #   10: Figure of Merit as P_B*P_B*P_Y*P_Y * Lum, same story for P
 
 
-# generate hash tables
+# generate hash tables, which hash fill or run numbers into per-fill or per-run lumis
 my %fill_of_run;
 my %lumi_of_run;
 my $lumi_of_fill;
@@ -58,11 +70,20 @@ foreach $line (<LUMI>) {
   $runnum = $lumi_data[0];
   $fillnum = $lumi_data[3];
   $lumival = $lumi_data[4];
-  
-  if(exists $lumi_of_fill{$fillnum} ) { $lumi_of_fill{$fillnum} += $lumival; }
-  else { $lumi_of_fill{$fillnum} = $lumival; }
-  $fill_of_run{$runnum} = $fillnum;
-  $lumi_of_run{$runnum} = $lumival;
+
+  # only hash runs which are in polar_by_run.dat 
+  if(grep {$runnum eq $_} @runlist) {
+    if(exists $lumi_of_fill{$fillnum} ) { 
+      #print("DEBUG: add $lumival to $fillnum\n"); 
+      $lumi_of_fill{$fillnum} += $lumival;
+    }
+    else { 
+      #print("DEBUG: starting fill $fillnum at $lumival\n");
+      $lumi_of_fill{$fillnum} = $lumival;
+    }
+    $fill_of_run{$runnum} = $fillnum;
+    $lumi_of_run{$runnum} = $lumival;
+  };
 };
 #print Dumper(\%fill_of_run);
 #print Dumper(\%lumi_of_run);
@@ -80,7 +101,8 @@ my $summand_blue;
 my $summand_yell;
 my %lw_blue_pol_of_fill; # lumi weighted polarization, keyed by fill number
 my %lw_yell_pol_of_fill; # lumi weighted polarization, keyed by fill number
-open(POLDATA,"polar_by_run.dat") or die("ERROR: polar_by_run.dat not found\n");
+
+seek(POLDATA,0,0);
 foreach $line (<POLDATA>) {
   chomp($line);
   my @pol_data = split " ", $line;
@@ -105,7 +127,6 @@ foreach $line (<POLDATA>) {
   if(exists $lw_yell_pol_of_fill{$fillnum}) { $lw_yell_pol_of_fill{$fillnum} += $summand_yell; }
   else { $lw_yell_pol_of_fill{$fillnum} = $summand_yell; }
 }
-seek(POLDATA,0,0);
 
 
 # write new data table, with luminosity values and luminosity-weighted polarizations appended;
@@ -116,6 +137,8 @@ my $lumi_run;
 my $lumi_fill;
 my $lw_blue_pol;
 my $lw_yell_pol;
+
+seek(POLDATA,0,0);
 foreach $line (<POLDATA>) {
   chomp($line);
   my @pol_data = split " ", $line;
