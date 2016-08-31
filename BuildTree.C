@@ -1,13 +1,17 @@
 void BuildTree(TString outfile_n = "pol_12.root",
                TString filename = "polar_by_run_with_lumi.dat") {
   TFile * outfile = new TFile(outfile_n.Data(),"RECREATE");
+  TString outfile_e_n = outfile_n;
+  outfile_e_n.ReplaceAll("pol","pol_E");
 
   // build tree
   TTree * poltr = new TTree();
   TString treestr =
     "i/I:fill/I:runnum/I:startT/F:b_pol/F:b_pol_avg/F:y_pol/F:y_pol_avg/F";
   treestr = treestr + ":T/F:midT/F:endT/F:b_p0/F:b_p1/F:y_p0/F:y_p1/F";
-  treestr = treestr + ":lumi_run/D:lumi_fill/D:b_pol_lw/D:y_pol_lw/D";
+  treestr = treestr + ":b_pol_avg_E/F:b_p0_E/F:b_p1_E/F:b_pol_E/F";
+  treestr = treestr + ":y_pol_avg_E/F:y_p0_E/F:y_p1_E/F:y_pol_E/F";
+  treestr = treestr + ":lumi_run/D:lumi_fill/D:b_pol_lw/D:y_pol_lw/D:b_pol_lw_E/D:y_pol_lw_E/D";
   poltr->ReadFile(filename.Data(),treestr.Data());
 
 
@@ -32,6 +36,22 @@ void BuildTree(TString outfile_n = "pol_12.root",
   TH1D * h_y_p0 = new TH1D("h_y_p0",h_title.Data(),ent,0,imax+1);
   TH1D * h_y_p1 = new TH1D("h_y_p1","P^{Y}_{1} vs. run index",ent,0,imax+1);
 
+  TString e_title = "#sigma P^{B}(t)[blue] :: #sigma <P^{B}>_{beam_current_weighted}[red] :: #sigma <P^{B}>_{lumi_weighted}[magenta] :: #sigma P^{B}_{0}[green] :: #sigma P^{B}_{1}[cyan] vs. run index";
+
+  TH1D * e_b_pol = new TH1D("e_b_pol",e_title.Data(),ent,0,imax+1);
+  TH1D * e_b_pol_avg = new TH1D("e_b_pol_avg",e_title.Data(),ent,0,imax+1);
+  TH1D * e_b_pol_lw = new TH1D("e_b_pol_lw",e_title.Data(),ent,0,imax+1);
+  TH1D * e_b_p0 = new TH1D("e_b_p0",e_title.Data(),ent,0,imax+1);
+  TH1D * e_b_p1 = new TH1D("e_b_p1","P^{Y}_{1} vs. run index",ent,0,imax+1);
+
+  e_title.ReplaceAll("B","Y");
+
+  TH1D * e_y_pol = new TH1D("e_y_pol",e_title.Data(),ent,0,imax+1);
+  TH1D * e_y_pol_avg = new TH1D("e_y_pol_avg",e_title.Data(),ent,0,imax+1);
+  TH1D * e_y_pol_lw = new TH1D("e_y_pol_lw",e_title.Data(),ent,0,imax+1);
+  TH1D * e_y_p0 = new TH1D("e_y_p0",e_title.Data(),ent,0,imax+1);
+  TH1D * e_y_p1 = new TH1D("e_y_p1","P^{Y}_{1} vs. run index",ent,0,imax+1);
+
 
   TString lumi_title = "Luminsosity vs. run index (by run [blue] :: by fill [orange])";
   TH1D * h_lumi_run = new TH1D("h_lumi_run",lumi_title.Data(),ent,0,imax+1);
@@ -49,6 +69,18 @@ void BuildTree(TString outfile_n = "pol_12.root",
   poltr->Project("h_y_pol_lw","i","y_pol_lw");
   poltr->Project("h_y_p0","i","y_p0");
   poltr->Project("h_y_p1","i","y_p1");
+
+  poltr->Project("e_b_pol","i","b_pol_E");
+  poltr->Project("e_b_pol_avg","i","b_pol_avg_E");
+  poltr->Project("e_b_pol_lw","i","b_pol_lw_E");
+  poltr->Project("e_b_p0","i","b_p0_E");
+  poltr->Project("e_b_p1","i","b_p1_E");
+
+  poltr->Project("e_y_pol","i","y_pol_E");
+  poltr->Project("e_y_pol_avg","i","y_pol_avg_E");
+  poltr->Project("e_y_pol_lw","i","y_pol_lw_E");
+  poltr->Project("e_y_p0","i","y_p0_E");
+  poltr->Project("e_y_p1","i","y_p1_E");
 
   poltr->Project("h_lumi_run","i","lumi_run");
   poltr->Project("h_lumi_fill","i","lumi_fill");
@@ -69,6 +101,18 @@ void BuildTree(TString outfile_n = "pol_12.root",
   h_y_p1->SetLineColor(kCyan+1);
   h_y_p1->SetFillColor(kCyan+1);
 
+  e_b_pol->SetLineColor(kBlue);
+  e_b_pol_avg->SetLineColor(kRed+1);
+  e_b_pol_lw->SetLineColor(kMagenta);
+  e_b_p0->SetLineColor(kGreen+2);
+  e_b_p1->SetLineColor(kCyan+1);
+
+  e_y_pol->SetLineColor(kBlue);
+  e_y_pol_avg->SetLineColor(kRed+1);
+  e_y_pol_lw->SetLineColor(kMagenta);
+  e_y_p0->SetLineColor(kGreen+2);
+  e_y_p1->SetLineColor(kCyan+1);
+
   h_lumi_run->SetLineColor(kBlue);
   h_lumi_run->SetFillColor(kBlue);
   h_lumi_fill->SetLineColor(kOrange+1);
@@ -83,6 +127,17 @@ void BuildTree(TString outfile_n = "pol_12.root",
   h_y_pol_avg->SetLineWidth(LWIDTH);
   h_y_pol_lw->SetLineWidth(LWIDTH);
   h_y_p0->SetLineWidth(LWIDTH);
+
+  e_b_pol->SetLineWidth(LWIDTH);
+  e_b_pol_avg->SetLineWidth(LWIDTH);
+  e_b_pol_lw->SetLineWidth(LWIDTH);
+  e_b_p0->SetLineWidth(LWIDTH);
+  e_b_p1->SetLineWidth(LWIDTH);
+  e_y_pol->SetLineWidth(LWIDTH);
+  e_y_pol_avg->SetLineWidth(LWIDTH);
+  e_y_pol_lw->SetLineWidth(LWIDTH);
+  e_y_p0->SetLineWidth(LWIDTH);
+  e_y_p1->SetLineWidth(LWIDTH);
 
   h_b_pol->GetYaxis()->SetRangeUser(0,100);
   h_b_pol_avg->GetYaxis()->SetRangeUser(0,100);
@@ -158,10 +213,46 @@ void BuildTree(TString outfile_n = "pol_12.root",
   c_y->Print(png_name.Data(),"png");
 
 
+  TString png_name_e = zoom ? "canv_blue_zoomed_":"canv_blue_full_";
+  png_name_e = png_name_e + outfile_e_n;
+  png_name_e.ReplaceAll("root","png");
+
+  TCanvas * ce_b = new TCanvas("canv_blue_err","canv_blue_err",width_factor*2500,2000);
+  ce_b->Divide(1,5);
+  ce_b->cd(1);
+    e_b_pol->Draw();
+    e_b_pol_avg->Draw("same");
+  ce_b->cd(2);
+    e_b_pol->Draw();
+    e_b_pol_lw->Draw("same");
+  ce_b->cd(3); e_b_p0->Draw();
+  ce_b->cd(4); e_b_p1->Draw();
+  ce_b->cd(5); 
+    h_lumi_fill->Draw();
+    h_lumi_run->Draw("same");
+  ce_b->Print(png_name_e.Data(),"png");
+
+  png_name_e.ReplaceAll("blue","yell");
+  TCanvas * ce_y = new TCanvas("canv_yell_err","canv_yell_err",width_factor*2500,2000);
+  ce_y->Divide(1,5);
+  ce_y->cd(1);
+    e_y_pol->Draw();
+    e_y_pol_avg->Draw("same");
+  ce_y->cd(2);
+    e_y_pol->Draw();
+    e_y_pol_lw->Draw("same");
+  ce_y->cd(3); e_y_p0->Draw();
+  ce_y->cd(4); e_y_p1->Draw();
+  ce_y->cd(5); 
+    h_lumi_fill->Draw();
+    h_lumi_run->Draw("same");
+  ce_y->Print(png_name_e.Data(),"png");
 
   // write
   poltr->Write("poltr");
   c_b->Write();
   c_y->Write();
+  ce_b->Write();
+  ce_y->Write();
   printf("\n%s created\n",outfile_n.Data());
 };

@@ -201,11 +201,19 @@ my $BlueP1;
 my $BluePol;
 my $BlueAvg;
 my $BlueDiff;
+my $BlueP0Err;
+my $BlueP1Err;
+my $BluePolErr;
+my $BlueAvgErr;
 my $YellP0;
 my $YellP1;
 my $YellPol;
 my $YellAvg;
 my $YellDiff;
+my $YellP0Err;
+my $YellP1Err;
+my $YellPolErr;
+my $YellAvgErr;
 my $run_idx=0;
 open(OUT,"> polar_by_run.dat");
 seek(FILLS,0,0);
@@ -242,6 +250,13 @@ foreach $line (<FILLS>) {
       $BlueDiff = $BluePol - $BlueAvg;
       #if(abs($BlueP0)<1 or abs($BlueP1)<0.001) { $BluePol = 0.0; }
       if(abs($BlueP0)<1) { $BluePol = $BlueAvg; }
+
+      # blue polarization error
+      $BlueAvgErr = $pol_data[$kBlueAvgErr];
+      $BlueP0Err = $pol_data[$kBlueP0Err]; 
+      $BlueP1Err = $pol_data[$kBlueP1Err]; 
+      $BluePolErr = sqrt($BlueP0Err**2 + (($t**2) * ($BlueP1Err**2)));
+
       
 
       # yellow polarization
@@ -253,9 +268,17 @@ foreach $line (<FILLS>) {
       # if(abs($YellP0)<1 or abs($YellP1)<0.001) { $YellPol = 0.0; }
       if(abs($YellP0)<1) { $YellPol = $YellAvg; }
 
+      # yellow polarization error
+      $YellAvgErr = $pol_data[$kYellAvgErr];
+      $YellP0Err = $pol_data[$kYellP0Err]; 
+      $YellP1Err = $pol_data[$kYellP1Err]; 
+      $YellPolErr = sqrt($YellP0Err**2 + (($t**2) * ($YellP1Err**2)));
 
-      print(OUT "$run_idx $fillnum $runnum $st $BluePol $BlueAvg $YellPol $YellAvg");
-      print(OUT " $t $mt $et $BlueP0 $BlueP1 $YellP0 $YellP1");
+
+      print(OUT "$run_idx $fillnum $runnum $st $BluePol $BlueAvg $YellPol $YellAvg"); # [0-7]
+      print(OUT " $t $mt $et $BlueP0 $BlueP1 $YellP0 $YellP1"); # [8-14]
+      print(OUT " $BlueAvgErr $BlueP0Err $BlueP1Err $BluePolErr"); # [15-18]
+      print(OUT " $YellAvgErr $YellP0Err $YellP1Err $YellPolErr"); # [19-22]
       print(OUT "\n");
 
       $run_idx++;

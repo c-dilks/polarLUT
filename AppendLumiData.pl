@@ -95,12 +95,20 @@ foreach $line (<LUMI>) {
   my $kFillnum = 1;  #pol_data enum
   my $kBlue_pol = 4; #pol_data enum
   my $kYell_pol = 6; #pol_data enum
+  my $kBlue_pol_E = 18; #pol_data enum
+  my $kYell_pol_E = 22; #pol_data enum
 my $blue_pol;
 my $yell_pol;
+my $blue_pol_E;
+my $yell_pol_E;
 my $summand_blue;
 my $summand_yell;
+my $summand_blue_E;
+my $summand_yell_E;
 my %lw_blue_pol_of_fill; # lumi weighted polarization, keyed by fill number
 my %lw_yell_pol_of_fill; # lumi weighted polarization, keyed by fill number
+my %lw_blue_pol_E_of_fill; # lumi weighted polarization error, keyed by fill number
+my %lw_yell_pol_E_of_fill; # lumi weighted polarization error, keyed by fill number
 
 seek(POLDATA,0,0);
 foreach $line (<POLDATA>) {
@@ -110,14 +118,21 @@ foreach $line (<POLDATA>) {
   $runnum = $pol_data[$kRunnum];
   $blue_pol = $pol_data[$kBlue_pol];
   $yell_pol = $pol_data[$kYell_pol];
+  $blue_pol_E = $pol_data[$kBlue_pol_E];
+  $yell_pol_E = $pol_data[$kYell_pol_E];
 
   $summand_blue = 0;
   $summand_yell = 0;
 
+  $summand_blue_E = 0;
+  $summand_yell_E = 0;
+
   if(exists $lumi_of_run{$runnum} and exists $lumi_of_fill{$fillnum}) {
     if($lumi_of_fill{$fillnum}>0) {
-      $summand_blue = $lumi_of_run{$runnum} * $blue_pol / $lumi_of_fill{$fillnum};
-      $summand_yell = $lumi_of_run{$runnum} * $yell_pol / $lumi_of_fill{$fillnum};
+      $summand_blue = $lumi_of_run{$runnum} * $blue_pol / $lumi_of_fill{$fillnum}; # Lr*Pb/Lf
+      $summand_yell = $lumi_of_run{$runnum} * $yell_pol / $lumi_of_fill{$fillnum}; # Lr*Py/LF
+      $summand_blue_E = ($lumi_of_run{$runnum} * $blue_pol_E / $lumi_of_fill{$fillnum})**2; #(Lr*sigmaPb/Lf)^2
+      $summand_yell_E = ($lumi_of_run{$runnum} * $yell_pol_E / $lumi_of_fill{$fillnum})**2; #(Lr*sigmaPy/Lf)^2
     }
   }
 
@@ -126,6 +141,12 @@ foreach $line (<POLDATA>) {
 
   if(exists $lw_yell_pol_of_fill{$fillnum}) { $lw_yell_pol_of_fill{$fillnum} += $summand_yell; }
   else { $lw_yell_pol_of_fill{$fillnum} = $summand_yell; }
+
+  if(exists $lw_blue_pol_E_of_fill{$fillnum}) { $lw_blue_pol_E_of_fill{$fillnum} += $summand_blue_E; }
+  else { $lw_blue_pol_E_of_fill{$fillnum} = $summand_blue_E; }
+
+  if(exists $lw_yell_pol_E_of_fill{$fillnum}) { $lw_yell_pol_E_of_fill{$fillnum} += $summand_yell_E; }
+  else { $lw_yell_pol_E_of_fill{$fillnum} = $summand_yell_E; }
 }
 
 
@@ -137,6 +158,8 @@ my $lumi_run;
 my $lumi_fill;
 my $lw_blue_pol;
 my $lw_yell_pol;
+my $lw_blue_pol_E;
+my $lw_yell_pol_E;
 
 seek(POLDATA,0,0);
 foreach $line (<POLDATA>) {
@@ -146,21 +169,27 @@ foreach $line (<POLDATA>) {
   $runnum = $pol_data[$kRunnum];
   $blue_pol = $pol_data[$kBlue_pol];
   $yell_pol = $pol_data[$kYell_pol];
+  $blue_pol_E = $pol_data[$kBlue_pol_E];
+  $yell_pol_E = $pol_data[$kYell_pol_E];
 
   if(exists $lumi_of_fill{$fillnum}) {
     $lumi_fill = $lumi_of_fill{$fillnum};
     $lw_blue_pol = $lw_blue_pol_of_fill{$fillnum};
     $lw_yell_pol = $lw_yell_pol_of_fill{$fillnum};
+    $lw_blue_pol_E = sqrt($lw_blue_pol_E_of_fill{$fillnum});
+    $lw_yell_pol_E = sqrt($lw_yell_pol_E_of_fill{$fillnum});
   } else {
     $lumi_fill = 0;
     $lw_blue_pol = $blue_pol;
     $lw_yell_pol = $yell_pol;
+    $lw_blue_pol_E = $blue_pol_E;
+    $lw_yell_pol_E = $yell_pol_E;
   }
 
   if(exists $lumi_of_run{$runnum}) { $lumi_run = $lumi_of_run{$runnum}; }
   else { $lumi_run = 0; }
 
-  print(POLDATA_OUT "$line $lumi_run $lumi_fill $lw_blue_pol $lw_yell_pol\n");
+  print(POLDATA_OUT "$line $lumi_run $lumi_fill $lw_blue_pol $lw_yell_pol $lw_blue_pol_E $lw_yell_pol_E\n");
 };
 close(POLDATA_OUT);
 close(POLDATA);
