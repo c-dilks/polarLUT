@@ -255,7 +255,7 @@ foreach $line (<FILLS>) {
       $BlueAvgErr = $pol_data[$kBlueAvgErr];
       $BlueP0Err = $pol_data[$kBlueP0Err]; 
       $BlueP1Err = $pol_data[$kBlueP1Err]; 
-      $BluePolErr = sqrt($BlueP0Err**2 + (($t**2) * ($BlueP1Err**2)));
+      $BluePolErr = sqrt($BlueP0Err**2 + (($t**2) * ($BlueP1Err**2))); # (not used any more; prefer errors on P0 & P1)
 
       
 
@@ -272,7 +272,7 @@ foreach $line (<FILLS>) {
       $YellAvgErr = $pol_data[$kYellAvgErr];
       $YellP0Err = $pol_data[$kYellP0Err]; 
       $YellP1Err = $pol_data[$kYellP1Err]; 
-      $YellPolErr = sqrt($YellP0Err**2 + (($t**2) * ($YellP1Err**2)));
+      $YellPolErr = sqrt($YellP0Err**2 + (($t**2) * ($YellP1Err**2))); # (not used any more; prefer errors on P0 & P1)
 
 
       print(OUT "$run_idx $fillnum $runnum $st $BluePol $BlueAvg $YellPol $YellAvg"); # [0-7]

@@ -95,44 +95,60 @@ foreach $line (<LUMI>) {
   my $kFillnum = 1;  #pol_data enum
   my $kBlue_pol = 4; #pol_data enum
   my $kYell_pol = 6; #pol_data enum
+  my $ktime = 8; # pol_data enum
+  my $kBlue_p0_E = 16; #pol_data enum
+  my $kBlue_p1_E = 17; #pol_data enum
   my $kBlue_pol_E = 18; #pol_data enum
+  my $kYell_p0_E = 20; #pol_data enum
+  my $kYell_p1_E = 21; #pol_data enum
   my $kYell_pol_E = 22; #pol_data enum
 my $blue_pol;
 my $yell_pol;
-my $blue_pol_E;
-my $yell_pol_E;
+my $blue_p0_E;
+my $yell_p0_E;
+my $blue_p1_E;
+my $yell_p1_E;
+my $time;
+
 my $summand_blue;
 my $summand_yell;
-my $summand_blue_E;
-my $summand_yell_E;
+my $summand_LT;
+
 my %lw_blue_pol_of_fill; # lumi weighted polarization, keyed by fill number
 my %lw_yell_pol_of_fill; # lumi weighted polarization, keyed by fill number
-my %lw_blue_pol_E_of_fill; # lumi weighted polarization error, keyed by fill number
-my %lw_yell_pol_E_of_fill; # lumi weighted polarization error, keyed by fill number
+my %LTsum_of_fill; # sum of run-lumi * run-time t (needed for lumi-weighted error), keyed by fill number
+my %sigP0_blue_of_fill; # uncertainty on P0, keyed by fill
+my %sigP0_yell_of_fill; # uncertainty on P0, keyed by fill
+my %sigP1_blue_of_fill; # uncertainty on P0, keyed by fill
+my %sigP1_yell_of_fill; # uncertainty on P0, keyed by fill
+
 
 seek(POLDATA,0,0);
 foreach $line (<POLDATA>) {
   chomp($line);
   my @pol_data = split " ", $line;
+
   $fillnum = $pol_data[$kFillnum];
   $runnum = $pol_data[$kRunnum];
   $blue_pol = $pol_data[$kBlue_pol];
   $yell_pol = $pol_data[$kYell_pol];
-  $blue_pol_E = $pol_data[$kBlue_pol_E];
-  $yell_pol_E = $pol_data[$kYell_pol_E];
+  $time = $pol_data[$ktime];
+  $blue_p0_E = $pol_data[$kBlue_p0_E];
+  $yell_p0_E = $pol_data[$kYell_p0_E];
+  $blue_p1_E = $pol_data[$kBlue_p1_E];
+  $yell_p1_E = $pol_data[$kYell_p1_E];
+
 
   $summand_blue = 0;
   $summand_yell = 0;
+  $summand_LT = 0;
 
-  $summand_blue_E = 0;
-  $summand_yell_E = 0;
 
   if(exists $lumi_of_run{$runnum} and exists $lumi_of_fill{$fillnum}) {
     if($lumi_of_fill{$fillnum}>0) {
       $summand_blue = $lumi_of_run{$runnum} * $blue_pol / $lumi_of_fill{$fillnum}; # Lr*Pb/Lf
       $summand_yell = $lumi_of_run{$runnum} * $yell_pol / $lumi_of_fill{$fillnum}; # Lr*Py/LF
-      $summand_blue_E = ($lumi_of_run{$runnum} * $blue_pol_E / $lumi_of_fill{$fillnum})**2; #(Lr*sigmaPb/Lf)^2
-      $summand_yell_E = ($lumi_of_run{$runnum} * $yell_pol_E / $lumi_of_fill{$fillnum})**2; #(Lr*sigmaPy/Lf)^2
+      $summand_LT = $lumi_of_run{$runnum} * $time; # run's lumi * (run's midtime - fill starttime)
     }
   }
 
@@ -142,11 +158,14 @@ foreach $line (<POLDATA>) {
   if(exists $lw_yell_pol_of_fill{$fillnum}) { $lw_yell_pol_of_fill{$fillnum} += $summand_yell; }
   else { $lw_yell_pol_of_fill{$fillnum} = $summand_yell; }
 
-  if(exists $lw_blue_pol_E_of_fill{$fillnum}) { $lw_blue_pol_E_of_fill{$fillnum} += $summand_blue_E; }
-  else { $lw_blue_pol_E_of_fill{$fillnum} = $summand_blue_E; }
+  if(exists $LTsum_of_fill{$fillnum}) { $LTsum_of_fill{$fillnum} += $summand_LT; }
+  else { $LTsum_of_fill{$fillnum} = $summand_LT; }
 
-  if(exists $lw_yell_pol_E_of_fill{$fillnum}) { $lw_yell_pol_E_of_fill{$fillnum} += $summand_yell_E; }
-  else { $lw_yell_pol_E_of_fill{$fillnum} = $summand_yell_E; }
+  if(!(exists $sigP0_blue_of_fill{$fillnum})) { $sigP0_blue_of_fill{$fillnum} = $blue_p0_E; }
+  if(!(exists $sigP0_yell_of_fill{$fillnum})) { $sigP0_yell_of_fill{$fillnum} = $yell_p0_E; }
+
+  if(!(exists $sigP1_blue_of_fill{$fillnum})) { $sigP1_blue_of_fill{$fillnum} = $blue_p1_E; }
+  if(!(exists $sigP1_yell_of_fill{$fillnum})) { $sigP1_yell_of_fill{$fillnum} = $yell_p1_E; }
 }
 
 
@@ -160,6 +179,8 @@ my $lw_blue_pol;
 my $lw_yell_pol;
 my $lw_blue_pol_E;
 my $lw_yell_pol_E;
+
+my $SCALE_UNC = 0.031; # fill-by-fill scale systematic uncertainty (from pol. analysis note table 4)
 
 seek(POLDATA,0,0);
 foreach $line (<POLDATA>) {
@@ -176,8 +197,12 @@ foreach $line (<POLDATA>) {
     $lumi_fill = $lumi_of_fill{$fillnum};
     $lw_blue_pol = $lw_blue_pol_of_fill{$fillnum};
     $lw_yell_pol = $lw_yell_pol_of_fill{$fillnum};
-    $lw_blue_pol_E = sqrt($lw_blue_pol_E_of_fill{$fillnum});
-    $lw_yell_pol_E = sqrt($lw_yell_pol_E_of_fill{$fillnum});
+    $lw_blue_pol_E = sqrt( ( $sigP0_blue_of_fill{$fillnum} )**2 + 
+                           ( ($sigP1_blue_of_fill{$fillnum}/$lumi_of_fill{$fillnum}) * $LTsum_of_fill{$fillnum} )**2 +
+                           ( $SCALE_UNC * $lw_blue_pol )**2  );
+    $lw_yell_pol_E = sqrt( ( $sigP0_yell_of_fill{$fillnum} )**2 + 
+                           ( ($sigP1_yell_of_fill{$fillnum}/$lumi_of_fill{$fillnum}) * $LTsum_of_fill{$fillnum} )**2 +
+                           ( $SCALE_UNC * $lw_yell_pol )**2  );
   } else {
     $lumi_fill = 0;
     $lw_blue_pol = $blue_pol;
