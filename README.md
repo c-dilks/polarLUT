@@ -20,3 +20,6 @@ set `$debug=1` for extra debugging steps and branches
    file is the re-formatted table and differences between it and the
    original table are highlighted. Use the arrow keys to move around and
    check the differences. Type `ESC : q a ENTER` to quit vimdiff.
+
+## overall polarization and error
+execute `ComputeOverallPol.C`, this will print a bunch of latex lines, in which the final results are embedded
