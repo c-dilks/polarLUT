@@ -52,6 +52,7 @@ switch($year) {
 
 my $storage_dir="data_${year}";
 my $goodruns_file="goodruns_${year}.dat";
+#my $goodruns_file="runlist_pi0_${year}.dat";
 system("mkdir -p $storage_dir");
 
 

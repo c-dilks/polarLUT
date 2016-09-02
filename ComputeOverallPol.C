@@ -35,6 +35,7 @@ void ComputeOverallPol(TString filename="pol_12.root") {
       NFILLS++;
       SUM_blue += b_pol_lw * lumi_fill;
       SUM_yell += y_pol_lw * lumi_fill;
+      //printf("b_pol_lw_E=%.2f lumi_fill=%f\n",b_pol_lw_E,lumi_fill);
       SUM_OF_SQUARES_ERR_blue += TMath::Power( b_pol_lw_E * lumi_fill, 2);
       SUM_OF_SQUARES_ERR_yell += TMath::Power( y_pol_lw_E * lumi_fill, 2);
       fill_tmp = fill;
@@ -65,6 +66,9 @@ void ComputeOverallPol(TString filename="pol_12.root") {
       SYS_SCALE = 0.064;
       SYS_PROFILE = 0.031 / TMath::Sqrt(NFILLS);
       break;
+    default:
+      fprintf(stderr,"ERROR: unknown year\n");
+      return;
   };
 
 
@@ -84,16 +88,18 @@ void ComputeOverallPol(TString filename="pol_12.root") {
   // print out for latex
   printf("\n\n\n");
   printf("\\begin{aligned}\n");
-  printf("& year = %d \\\\\n",year);
-  printf("& L_{int} = %.3f \\\\\n",INT_LUMI);
-  printf("& \\mathbb{P}_B = %.3f \\pm %.3f \\\\\n",POL_blue,SIGMA_POL_TOT_blue);
-  printf("& \\mathbb{P}_Y = %.3f \\pm %.3f \\\\\n",POL_yell,SIGMA_POL_TOT_yell);
-  printf("& \\sigma_{\\mathbb{P}_B,corr} = Re\\left(\\sqrt{1-%d/%d}\\right)\\cdot %.3f = %.3f \\\\\n",NFILLS,NFILLS_AN_blue,SIGMA_POL_blue,SIGMA_POL_CORR_blue);
-  printf("& \\sigma_{\\mathbb{P}_Y,corr} = Re\\left(\\sqrt{1-%d/%d}\\right)\\cdot %.3f = %.3f \\\\\n",NFILLS,NFILLS_AN_yell,SIGMA_POL_yell,SIGMA_POL_CORR_yell);
-  printf("& \\mathbb{P_B}\\cdot\\sigma_{scale}/P = %.3f \\cdot %.3f = %.3f \\\\\n",POL_blue,SYS_SCALE,POL_blue*SYS_SCALE);
-  printf("& \\mathbb{P_Y}\\cdot\\sigma_{scale}/P = %.3f \\cdot %.3f = %.3f \\\\\n",POL_yell,SYS_SCALE,POL_yell*SYS_SCALE);
-  printf("& \\mathbb{P_B}\\cdot\\sigma_{profile}/P = %.3f \\cdot %.3f = %.3f \\\\\n",POL_blue,SYS_PROFILE,POL_blue*SYS_PROFILE);
-  printf("& \\mathbb{P_Y}\\cdot\\sigma_{profile}/P = %.3f \\cdot %.3f = %.3f \\\\\n",POL_yell,SYS_PROFILE,POL_yell*SYS_PROFILE);
+  printf("& \\text{RUN}~%d \\\\\n",year);
+  printf("& L_{int} = %.3f~\\text{pb}^{-1} \\\\\n",INT_LUMI);
+  printf("& \\mathbb{P}_B = %.3f\\%% \\pm %.3f\\%% \\\\\n",POL_blue,SIGMA_POL_TOT_blue);
+  printf("& \\mathbb{P}_Y = %.3f\\%% \\pm %.3f\\%% \\\\\n",POL_yell,SIGMA_POL_TOT_yell);
+  printf("& \\sigma_{\\mathbb{P}_B,\\text{(fill-to-fill scale)}} = Re\\left[\\sqrt{1-%d/%d}\\right]\\cdot \\left[%.3f\\%%\\right] = %.3f\\%% \\\\\n",
+    NFILLS,NFILLS_AN_blue,SIGMA_POL_blue,SIGMA_POL_CORR_blue);
+  printf("& \\sigma_{\\mathbb{P}_Y,\\text{(fill-to-fill scale)}} = Re\\left[\\sqrt{1-%d/%d}\\right]\\cdot \\left[%.3f\\%%\\right] = %.3f\\%% \\\\\n",
+    NFILLS,NFILLS_AN_yell,SIGMA_POL_yell,SIGMA_POL_CORR_yell);
+  printf("& \\mathbb{P}_B\\cdot\\sigma_{scale}/P = %.3f\\%% \\cdot %.3f = %.3f\\%% \\\\\n",POL_blue,SYS_SCALE,POL_blue*SYS_SCALE);
+  printf("& \\mathbb{P}_Y\\cdot\\sigma_{scale}/P = %.3f\\%% \\cdot %.3f = %.3f\\%% \\\\\n",POL_yell,SYS_SCALE,POL_yell*SYS_SCALE);
+  printf("& \\mathbb{P}_B\\cdot\\sigma_{profile}/P = %.3f\\%% \\cdot %.3f = %.3f\\%% \\\\\n",POL_blue,SYS_PROFILE,POL_blue*SYS_PROFILE);
+  printf("& \\mathbb{P}_Y\\cdot\\sigma_{profile}/P = %.3f\\%% \\cdot %.3f = %.3f\\%% \\\\\n",POL_yell,SYS_PROFILE,POL_yell*SYS_PROFILE);
   printf("\\end{aligned}\n");
 
 };

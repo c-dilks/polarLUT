@@ -95,19 +95,29 @@ foreach $line (<LUMI>) {
   my $kFillnum = 1;  #pol_data enum
   my $kBlue_pol = 4; #pol_data enum
   my $kYell_pol = 6; #pol_data enum
+  my $kBlue_pol_ave = 5; #pol_data enum
+  my $kYell_pol_ave = 7; #pol_data enum
   my $ktime = 8; # pol_data enum
+  my $kBlue_pol_ave_E = 15; #pol_data enum
   my $kBlue_p0_E = 16; #pol_data enum
   my $kBlue_p1_E = 17; #pol_data enum
   my $kBlue_pol_E = 18; #pol_data enum
+  my $kYell_pol_ave_E = 19; #pol_data enum
   my $kYell_p0_E = 20; #pol_data enum
   my $kYell_p1_E = 21; #pol_data enum
   my $kYell_pol_E = 22; #pol_data enum
 my $blue_pol;
 my $yell_pol;
+my $blue_pol_E;
+my $yell_pol_E;
+my $blue_pol_ave;
+my $yell_pol_ave;
 my $blue_p0_E;
 my $yell_p0_E;
 my $blue_p1_E;
 my $yell_p1_E;
+my $blue_pol_ave_E;
+my $yell_pol_ave_E;
 my $time;
 
 my $summand_blue;
@@ -193,6 +203,11 @@ foreach $line (<POLDATA>) {
   $blue_pol_E = $pol_data[$kBlue_pol_E];
   $yell_pol_E = $pol_data[$kYell_pol_E];
 
+  $blue_pol_ave = $pol_data[$kBlue_pol_ave];
+  $yell_pol_ave = $pol_data[$kYell_pol_ave];
+  $blue_pol_ave_E = $pol_data[$kBlue_pol_ave_E];
+  $yell_pol_ave_E = $pol_data[$kYell_pol_ave_E];
+
   if(exists $lumi_of_fill{$fillnum}) {
     $lumi_fill = $lumi_of_fill{$fillnum};
     $lw_blue_pol = $lw_blue_pol_of_fill{$fillnum};
@@ -205,10 +220,10 @@ foreach $line (<POLDATA>) {
                            ( $SCALE_UNC * $lw_yell_pol )**2  );
   } else {
     $lumi_fill = 0;
-    $lw_blue_pol = $blue_pol;
-    $lw_yell_pol = $yell_pol;
-    $lw_blue_pol_E = $blue_pol_E;
-    $lw_yell_pol_E = $yell_pol_E;
+    $lw_blue_pol = $blue_pol_ave;
+    $lw_yell_pol = $yell_pol_ave;
+    $lw_blue_pol_E = $blue_pol_ave_E;
+    $lw_yell_pol_E = $yell_pol_ave_E;
   }
 
   if(exists $lumi_of_run{$runnum}) { $lumi_run = $lumi_of_run{$runnum}; }
