@@ -2,6 +2,10 @@
 use Data::Dumper;
 use Switch;
 
+# if =1, use alternate run list (search for this variable below); if false, just uses goodruns_${year}.dat's run list
+my $USE_ALTERNATE_RUNLIST=0;
+
+# if =1; turns on extra debugging stuff 
 my $debug=0;
 
 # if =1, use only runs in goodruns_${year}.dat
@@ -51,9 +55,15 @@ switch($year) {
 }
 
 my $storage_dir="data_${year}";
-my $goodruns_file="goodruns_${year}.dat";
-#my $goodruns_file="runlist_pi0_${year}.dat";
 system("mkdir -p $storage_dir");
+
+my $goodruns_file;
+if($USE_ALTERNATE_RUNLIST==1) {
+  $goodruns_file="runlist_pi0_${year}.dat";
+} else {
+  $goodruns_file="goodruns_${year}.dat";
+}
+print("RUNLIST = $goodruns_file \n\n");
 
 
 # execute SQL queries and produce data tables
@@ -276,6 +286,27 @@ foreach $line (<FILLS>) {
       $YellPolErr = sqrt($YellP0Err**2 + (($t**2) * ($YellP1Err**2))); # (not used any more; prefer errors on P0 & P1)
 
 
+      # switch units from "percent" to "unitless"
+      $BluePol /= 100.0;
+      $BlueAvg /= 100.0;
+      $BlueP0 /= 100.0;
+      $BlueP1 /= 100.0;
+      $BluePolErr /= 100.0;
+      $BlueAvgErr /= 100.0;
+      $BlueP0Err /= 100.0;
+      $BlueP1Err /= 100.0;
+
+      $YellPol /= 100.0;
+      $YellAvg /= 100.0;
+      $YellP0 /= 100.0;
+      $YellP1 /= 100.0;
+      $YellPolErr /= 100.0;
+      $YellAvgErr /= 100.0;
+      $YellP0Err /= 100.0;
+      $YellP1Err /= 100.0;
+
+
+      # print output
       print(OUT "$run_idx $fillnum $runnum $st $BluePol $BlueAvg $YellPol $YellAvg"); # [0-7]
       print(OUT " $t $mt $et $BlueP0 $BlueP1 $YellP0 $YellP1"); # [8-14]
       print(OUT " $BlueAvgErr $BlueP0Err $BlueP1Err $BluePolErr"); # [15-18]
