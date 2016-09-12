@@ -2,7 +2,7 @@
 // - integrated luminosity
 // - overall lumi-weighted average polarization +/- overall error, including systematics
 
-void ComputeOverallPol(TString filename="pol_12.root") {
+void ComputeOverallPol(TString filename="pol_12_analysed_runs.root") {
   TFile * infile = new TFile(filename.Data(),"READ");
   TTree * tr = (TTree*) infile->Get("poltr");
 
