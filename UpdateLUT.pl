@@ -6,7 +6,7 @@ use Switch;
 my $USE_ALTERNATE_RUNLIST=0;
 
 # if =1; turns on extra debugging stuff 
-my $debug=0;
+my $debug=1;
 
 # if =1, use only runs in goodruns_${year}.dat
 # otherwise if =0, use all runs found in DB
@@ -23,7 +23,7 @@ if($#ARGV==0 or $#ARGV==1) {
   if($#ARGV==1) { $trigger = $ARGV[1]; }
   else { $trigger = $def_trigger; }
 } else {
-  print "specify year (12,13,etc.) as argument (and also optionally an FMS trigger for lumi calculation (default=${def_trigger}))\n";
+  print "specify year (12,13,15) as argument (and also optionally an FMS trigger for lumi calculation (default=${def_trigger}))\n";
   exit;
 } 
 print "year=$year trigger=$trigger\n\n";
@@ -47,6 +47,12 @@ switch($year) {
     $sqlport=3412;
     $sqlcmd="mysql --host ${sqlhost} --port ${sqlport} RunLog -N -e";
     $url="https://wiki.bnl.gov/rhicspin/Run_13_polarization";
+  }
+  case 15 {
+    $sqlhost="dbbak.starp.bnl.gov";
+    $sqlport=3414;
+    $sqlcmd="mysql --host ${sqlhost} --port ${sqlport} RunLog -N -e";
+    $url="https://wiki.bnl.gov/rhicspin/Run_15_polarization";
   }
   else {
     print("unknown year, terminating\n");
@@ -99,15 +105,25 @@ my @char_idxes;
 switch($year) {
   case 12 { @char_idxes = (39,48,56,65,73,82,90,99,107,116,125,133); }
   case 13 { @char_idxes = (50,59,67,76,84,93,101,110,118,127,135,144); }
+  # case 15 is not needed
 }
 foreach $line (<POL_TMP>) {
   chomp($line);
   my ($fill, $trash) = split " ",$line, 2;
-  foreach my $char_idx (@char_idxes) {
-    my $char = substr($line, $char_idx, 1);
-    if("$char" eq " ") {
-      substr($line,$char_idx-1,3) = "0.0";
+  
+  if($year==12 || $year==13) {
+    foreach my $char_idx (@char_idxes) {
+      my $char = substr($line, $char_idx, 1);
+      if("$char" eq " ") {
+        substr($line,$char_idx-1,3) = "0.0";
+      }
     }
+  } elsif($year==15) {
+    # put zero polarization in for yellow beam during pA part of run15
+    if($fill >= 19000) {
+      $line = "$line 0.0 0.0 0.0 0.0";
+    }
+    if($fill==19003) { next; }
   }
   print(POL "$line\n");
 }
@@ -118,6 +134,7 @@ if($debug) {
   system("vimdiff polarimetry.dat{,.tmp}");
 }
 close(POL);
+exit;
 
 
 # build fill number hash table
@@ -159,6 +176,20 @@ my $pol_data_length;
 switch($year) {
   case 12 {$pol_data_length=15;}
   case 13 {$pol_data_length=16;}
+  case 15 {$pol_data_length=12;}
+# RUN 15 columns
+#Fill
+#Beam_E
+#Start_T
+#Stop_T
+#Blue_P_0(%)
+#Blue_P_0_error(%)
+#Blue_dP/dT(%/hr)
+#Blue_dP/dT_error(%/hr)
+#Yellow_P_0(%)
+#Yellow_P_0_error(%)
+#Yellow_dP/dT(%/hr)
+#Yellow_dP/dT_error(%/hr)
 }
 # polarimetry data vector indices:
   my $ii=0;
