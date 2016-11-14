@@ -73,8 +73,15 @@ print("RUNLIST = $goodruns_file \n\n");
 
 
 # execute SQL queries and produce data tables
+# (note: run 15 has a problem where sometimes during a fill change, 2 entries are put in database for the same run, but with
+#  two different fill numbers; seems that the lower fill number matches the RLB; thus the query clause "entryTag=0" is used)
 system("${sqlcmd} \"SELECT runNumber,startRunTime,endRunTime FROM runDescriptor\" | uniq > times.list");
-system("${sqlcmd} \"SELECT runNumber,blueFillNumber FROM beamInfo\" | uniq > fills.list");
+if($year!=15) {
+  system("${sqlcmd} \"SELECT runNumber,blueFillNumber FROM beamInfo\" | uniq > fills.list");
+} else {
+  system("${sqlcmd} \"SELECT runNumber,blueFillNumber FROM beamInfo WHERE entryTag=0\" | uniq > fills.list");
+}
+
 
 # open data tables
 open(TIMES,"times.list") or die("ERROR: times.list not found");
@@ -94,7 +101,14 @@ foreach $line (<GOOD>) {
 
 # obtain polarimetry data table
 system("curl ${url}  > polarimetry.html");
-system("grep -A5000 \"<pre>\" polarimetry.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
+if($year!=15) {
+  system("grep -A5000 \"<pre>\" polarimetry.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
+} else {
+  # for run 15, we also zero out "strikethrough" numbers, because these fills had incorrect spin patterns; zeroing out
+  # polarizations effectively removes them from spin analyses
+  system("grep -A5000 \"<pre>\" polarimetry.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<strike.*strike>/0.0 0.0 0.0 0.0/g' | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
+}
+
 open(POL_TMP,"polarimetry.dat.tmp") or die("ERROR: polarimetry.dat.tmp not found");
 open(POL,"> polarimetry.dat");
 
@@ -120,10 +134,10 @@ foreach $line (<POL_TMP>) {
     }
   } elsif($year==15) {
     # put zero polarization in for yellow beam during pA part of run15
-    if($fill >= 19000) {
+    if($fill==19003) { $line = "$line 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"; }
+    elsif($fill >= 19000) {
       $line = "$line 0.0 0.0 0.0 0.0";
     }
-    if($fill==19003) { next; }
   }
   print(POL "$line\n");
 }
