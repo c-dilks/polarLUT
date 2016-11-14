@@ -20,6 +20,10 @@ switch($year) {
   case 13 {
     $lumidir = "/afs/rhic/star/doc_protected/docp1/common/common2013/trigger2013/lumipp500GeV";
   }
+  case 15 {
+    $lumidir = ""; # not used
+    `./FetchRun15lumi.sh ${trigger}`;
+  }
   else {
     print("unknown year, terminating\n");
     exit;
@@ -40,7 +44,8 @@ foreach $line (<POLDATA>) {
 
 
 # open lumi file
-$lumifile = $lumidir."/lum_perrun_FMS${trigger}.txt";
+if($year!=15) { $lumifile = $lumidir."/lum_perrun_FMS${trigger}.txt"; }
+else { $lumifile = "lumi_tmp.txt"; }
 open(LUMI,$lumifile) or die("ERROR: $lumifile does not exist");
 
 # columns of luminosity tables:
@@ -55,6 +60,7 @@ open(LUMI,$lumifile) or die("ERROR: $lumifile does not exist");
 #   8: Live time for the base trigger from TCU
 #   9: Figure of Merit as (P_B*P_B+P_Y*P_Y)/2 * Lum, where P is from the Jet measurements (0.5 for B and Y if no measurement)
 #   10: Figure of Merit as P_B*P_B*P_Y*P_Y * Lum, same story for P
+#   ... others for run 15..? doesn't matter...
 
 
 # generate hash tables, which hash fill or run numbers into per-fill or per-run lumis
@@ -252,6 +258,10 @@ switch($year) {
     $SCALE_UNC_blue = 0.028;
     $SCALE_UNC_yell = 0.014;
   }
+  case 15 {
+    $SCALE_UNC_blue = 0.0; # overridden below, since depends on pp vs. pAu vs. pAl
+    $SCALE_UNC_yell = 0.0; # overridden below, since depends on pp vs. pAu vs. pAl
+  }
 }
 $SCALE_UNC_prod = sqrt( ${SCALE_UNC_blue}**2 + ${SCALE_UNC_yell}**2 );
 
@@ -271,6 +281,19 @@ foreach $line (<POLDATA>) {
   $yell_pol_ave = $pol_data[$kYell_pol_ave];
   $blue_pol_ave_E = $pol_data[$kBlue_pol_ave_E];
   $yell_pol_ave_E = $pol_data[$kYell_pol_ave_E];
+
+  # run 15 systematic uncertainties:
+  if($fillnum<18957) {
+    $SCALE_UNC_blue = 0.0; #pp
+    $SCALE_UNC_yell = 0.0; #pp
+  } elsif($fillnum>=18957 && $fillnum<19170) {
+    $SCALE_UNC_blue = 1.3; #pAu
+    $SCALE_UNC_yell = 0.0; #pAu
+  } elsif($fillnum>=19170) {
+    $SCALE_UNC_blue = 0.0; #pAl
+    $SCALE_UNC_yell = 0.0; #pAl
+  }
+
 
   if(exists $lumi_of_fill{$fillnum}) {
     $lumi_fill = $lumi_of_fill{$fillnum};
@@ -324,3 +347,5 @@ foreach $line (<POLDATA>) {
 };
 close(POLDATA_OUT);
 close(POLDATA);
+
+if($year==15) { `rm lumi_tmp.txt`; }

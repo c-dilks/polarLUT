@@ -1,6 +1,13 @@
 // computes:
 // - integrated luminosity
 // - overall lumi-weighted average polarization +/- overall error, including systematics
+//
+//
+//
+// SYSTEMATICS NEED TO BE UPDATED FOR RUN 15!!!!!!!!!!!!!!!!!!!!!!!! (low priority task)
+//
+//
+//
 
 void ComputeOverallPol(TString filename="pol_12_analysed_runs.root") {
   TFile * infile = new TFile(filename.Data(),"READ");

@@ -6,7 +6,7 @@ use Switch;
 my $USE_ALTERNATE_RUNLIST=0;
 
 # if =1; turns on extra debugging stuff 
-my $debug=1;
+my $debug=0;
 
 # if =1, use only runs in goodruns_${year}.dat
 # otherwise if =0, use all runs found in DB
@@ -134,7 +134,6 @@ if($debug) {
   system("vimdiff polarimetry.dat{,.tmp}");
 }
 close(POL);
-exit;
 
 
 # build fill number hash table
@@ -173,44 +172,88 @@ foreach $line (<TIMES>) {
 #  print("BlueAvg for fill $fill is $pol_of_fill{$fill}[$kBlueAvg]\n");
 my %pol_of_fill; # fill number -> polarimetry data vector
 my $pol_data_length;
+  my $kFill;
+  my $kBeamE;
+  my $kStartT;
+  my $kEndT;
+  my $kBlueAvg;
+  my $kBlueAvgErr;
+  my $kBlueP0;
+  my $kBlueP0Err;
+  my $kBlueP1;
+  my $kBlueP1Err;
+  my $kYellAvg;
+  my $kYellAvgErr;
+  my $kYellP0;
+  my $kYellP0Err;
+  my $kYellP1;
+  my $kYellP1Err;
+my $ii = 0;
 switch($year) {
-  case 12 {$pol_data_length=15;}
-  case 13 {$pol_data_length=16;}
-  case 15 {$pol_data_length=12;}
-# RUN 15 columns
-#Fill
-#Beam_E
-#Start_T
-#Stop_T
-#Blue_P_0(%)
-#Blue_P_0_error(%)
-#Blue_dP/dT(%/hr)
-#Blue_dP/dT_error(%/hr)
-#Yellow_P_0(%)
-#Yellow_P_0_error(%)
-#Yellow_dP/dT(%/hr)
-#Yellow_dP/dT_error(%/hr)
-}
-# polarimetry data vector indices:
-  my $ii=0;
+  case 12 {
+    $kFill = $ii++;
+    $kBeamE = $ii++;
+    $kStartT = $ii++;
+    $kEndT = -1;
 
-  my $kFill=$ii++; # = 0
-  my $kBeamE=$ii++;
-  my $kStartT=$ii++;
-  my $kEndT=-1;
-  if($year==13) { $kEndT=$ii++;} # extra (and unused) column in run13
-  my $kBlueAvg=$ii++;
-  my $kBlueAvgErr=$ii++;
-  my $kBlueP0=$ii++;
-  my $kBlueP0Err=$ii++;
-  my $kBlueP1=$ii++;
-  my $kBlueP1Err=$ii++;
-  my $kYellAvg=$ii++;
-  my $kYellAvgErr=$ii++;
-  my $kYellP0=$ii++;
-  my $kYellP0Err=$ii++;
-  my $kYellP1=$ii++;
-  my $kYellP1Err=$ii++; # = 14 for run12, 15 for run13
+    $kBlueAvg = $ii++;
+    $kBlueAvgErr = $ii++;
+    $kBlueP0 = $ii++;
+    $kBlueP0Err = $ii++;
+    $kBlueP1 = $ii++;
+    $kBlueP1Err = $ii++;
+
+    $kYellAvg = $ii++;
+    $kYellAvgErr = $ii++;
+    $kYellP0 = $ii++;
+    $kYellP0Err = $ii++;
+    $kYellP1 = $ii++;
+    $kYellP1Err = $ii++;
+  }
+  case 13 {
+    $kFill = $ii++;
+    $kBeamE = $ii++;
+    $kStartT = $ii++;
+    $kEndT = $ii++;
+
+    $kBlueAvg = $ii++;
+    $kBlueAvgErr = $ii++;
+    $kBlueP0 = $ii++;
+    $kBlueP0Err = $ii++;
+    $kBlueP1 = $ii++;
+    $kBlueP1Err = $ii++;
+
+    $kYellAvg = $ii++;
+    $kYellAvgErr = $ii++;
+    $kYellP0 = $ii++;
+    $kYellP0Err = $ii++;
+    $kYellP1 = $ii++;
+    $kYellP1Err = $ii++;
+  }
+  case 15 {
+    $kFill = $ii++;
+    $kBeamE = $ii++;
+    $kStartT = $ii++;
+    $kEndT = $ii++;
+
+    $kBlueAvg = -1;
+    $kBlueAvgErr = -1;
+    $kBlueP0 = $ii++;
+    $kBlueP0Err = $ii++;
+    $kBlueP1 = $ii++;
+    $kBlueP1Err = $ii++;
+
+    $kYellAvg = -1;
+    $kYellAvgErr = -1;
+    $kYellP0 = $ii++;
+    $kYellP0Err = $ii++;
+    $kYellP1 = $ii++;
+    $kYellP1Err = $ii++;
+  }
+}
+$pol_data_length = $ii;
+
+
 
 # build
 open(POLDATA,"polarimetry.dat");
@@ -230,7 +273,7 @@ foreach $line (<POLDATA>) {
     print "ERROR: fill $fill not formatted properly in polarimetry.dat\n";
   }
 }
-#print Dumper(\%pol_of_fill);
+if($debug) { print Dumper(\%pol_of_fill); }
 
 
 # determine run-by-run polarization
@@ -288,13 +331,15 @@ foreach $line (<FILLS>) {
       $BlueP0 = $pol_data[$kBlueP0];
       $BlueP1 = $pol_data[$kBlueP1];
       $BluePol = $BlueP0 + ($t * $BlueP1);
-      $BlueAvg = $pol_data[$kBlueAvg];
+      if($year!=15) { $BlueAvg = $pol_data[$kBlueAvg]; }
+      else { $BlueAvg = 0; }
       $BlueDiff = $BluePol - $BlueAvg;
       #if(abs($BlueP0)<1 or abs($BlueP1)<0.001) { $BluePol = 0.0; }
       if(abs($BlueP0)<1) { $BluePol = $BlueAvg; }
 
       # blue polarization error
-      $BlueAvgErr = $pol_data[$kBlueAvgErr];
+      if($year!=15) { $BlueAvgErr = $pol_data[$kBlueAvgErr]; }
+      else { $BlueAvgErr = 0; }
       $BlueP0Err = $pol_data[$kBlueP0Err]; 
       $BlueP1Err = $pol_data[$kBlueP1Err]; 
       $BluePolErr = sqrt($BlueP0Err**2 + (($t**2) * ($BlueP1Err**2))); # (not used any more; prefer errors on P0 & P1)
@@ -305,13 +350,15 @@ foreach $line (<FILLS>) {
       $YellP0 = $pol_data[$kYellP0];
       $YellP1 = $pol_data[$kYellP1];
       $YellPol = $YellP0 + ($t * $YellP1);
-      $YellAvg = $pol_data[$kYellAvg];
+      if($year!=15) { $YellAvg = $pol_data[$kYellAvg]; }
+      else { $YellAvg = 0; }
       $YellDiff = $YellPol - $YellAvg;
       # if(abs($YellP0)<1 or abs($YellP1)<0.001) { $YellPol = 0.0; }
       if(abs($YellP0)<1) { $YellPol = $YellAvg; }
 
       # yellow polarization error
-      $YellAvgErr = $pol_data[$kYellAvgErr];
+      if($year!=15) { $YellAvgErr = $pol_data[$kYellAvgErr]; }
+      else { $YellAvgErr = 0; }
       $YellP0Err = $pol_data[$kYellP0Err]; 
       $YellP1Err = $pol_data[$kYellP1Err]; 
       $YellPolErr = sqrt($YellP0Err**2 + (($t**2) * ($YellP1Err**2))); # (not used any more; prefer errors on P0 & P1)
