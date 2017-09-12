@@ -1,9 +1,12 @@
 # polarLUT
-generalized polarimetery LUT
+generalized polarimetery LUT; to be executed on RCAS
 
 ## setup
-build symlinks to list of good runs
-- `for y in {12,13}; do ln -s /star/u/dilks/trgmon${y}/500/goodruns.dat goodruns_${y}.dat; done`
+build symlinks to list of good runs (if they aren't already there)
+- using `trgmon` run QA output (execute on `rcas`):
+  `for y in {12,13}; do ln -s /star/u/dilks/trgmon${y}/500/goodruns.dat goodruns_${y}.dat; done`
+- or use final runlists from `A_LL` analysis; see `$USE_ALTERNATE_RUNLIST` in `UpdateLUT.pl`
+- these files need to be stored 
 
 ## running
 just execute `UpdateLUT.pl [$year=12 or 13]`
