@@ -129,9 +129,13 @@ void ComputeOverallPol(TString filename="pol_99_analysed_runs.root") {
 
   // print out for latex
   printf("\n\n\n");
+  printf("\\begin{equation*}\n");
   printf("\\begin{aligned}\n");
 
-  printf("& \\text{RUN}~%d \\\\\\\\\n",year);
+  if(year==99) 
+    printf("& \\text{RUNS}~12~+~13 \\\\\\\\\n");
+  else
+    printf("& \\text{RUN}~%d \\\\\\\\\n",year);
 
   printf("& L_{int} = %.4f~\\text{pb}^{-1} \\\\\\\\\n",INT_LUMI);
 
@@ -156,5 +160,6 @@ void ComputeOverallPol(TString filename="pol_99_analysed_runs.root") {
   printf("& \\mathbb{P}_B\\mathbb{P}_Y\\cdot\\sigma_{profile}(P_BP_Y)/P_BP_Y = %.4f \\cdot %.4f = %.4f \\\\\\\\\n",
     POL_prod,SYS_PROFILE_double,POL_prod*SYS_PROFILE_double);
   printf("\\end{aligned}\n");
+  printf("\\end{equation*}\n");
 
 };
