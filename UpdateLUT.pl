@@ -100,13 +100,13 @@ foreach $line (<GOOD>) {
 
 
 # obtain polarimetry data table
-system("curl ${url}  > polarimetry.html");
+#system("curl ${url}  > polarimetry.html");
 if($year!=15) {
-  system("grep -A5000 \"<pre>\" polarimetry.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
+  system("grep -A5000 \"<pre>\" polarimetry_${year}.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
 } else {
   # for run 15, we also zero out "strikethrough" numbers, because these fills had incorrect spin patterns; zeroing out
   # polarizations effectively removes them from spin analyses
-  system("grep -A5000 \"<pre>\" polarimetry.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<strike.*strike>/0.0 0.0 0.0 0.0/g' | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
+  system("grep -A5000 \"<pre>\" polarimetry_${year}.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<strike.*strike>/0.0 0.0 0.0 0.0/g' | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
 }
 
 open(POL_TMP,"polarimetry.dat.tmp") or die("ERROR: polarimetry.dat.tmp not found");
@@ -419,6 +419,6 @@ system("root -b -q -l BuildTree.C'(\"${rootfile}\",\"polar_by_run_with_lumi.dat\
 
 system("mv fills.list times.list ${storage_dir}/");
 system("mv polarimetry.dat.tmp polarimetry.dat polar_by_run.dat polar_by_run_with_lumi.dat ${storage_dir}/");
-system("rm polarimetry.html");
+#system("rm polarimetry.html");
 
 print("${rootfile} created; data files stored in ${storage_dir}\n");
