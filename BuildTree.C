@@ -41,6 +41,8 @@ void BuildTree(TString outfile_n = "pol_12.root",
   TH1D * h_by_pol = new TH1D("h_by_pol",h_title.Data(),ent,0,imax+1);
   TH1D * h_by_pol_avg = new TH1D("h_by_pol_avg",h_title.Data(),ent,0,imax+1);
   TH1D * h_by_pol_lw = new TH1D("h_by_pol_lw",h_title.Data(),ent,0,imax+1);
+  TH1D * h_by_p0 = new TH1D("h_by_p0",h_title.Data(),ent,0,imax+1);
+  TH1D * h_by_p1 = new TH1D("h_by_p1","P^{B}_{1}P^{Y}_{1} vs. run index",ent,0,imax+1);
 
   TString e_title = "#sigma <P^{B}>_{beam_current_weighted}[red] :: #sigma <P^{B}>_{lumi_weighted}[blue] :: #sigma P^{B}_{0}[green] :: #sigma P^{B}_{1}[cyan] vs. run index";
 
@@ -211,6 +213,38 @@ void BuildTree(TString outfile_n = "pol_12.root",
     h_by_pol_avg->GetXaxis()->SetRangeUser(lower_bound,upper_bound);
     h_by_p0->GetXaxis()->SetRangeUser(lower_bound,upper_bound);
   };
+
+
+  // set label sizes
+  Float_t labelSize = 0.08;
+
+  h_b_pol->GetXaxis()->SetLabelSize(labelSize);
+  h_b_pol_avg->GetXaxis()->SetLabelSize(labelSize);
+  h_b_p0->GetXaxis()->SetLabelSize(labelSize);
+  h_b_p1->GetXaxis()->SetLabelSize(labelSize);
+
+  h_y_pol->GetXaxis()->SetLabelSize(labelSize);
+  h_y_pol_avg->GetXaxis()->SetLabelSize(labelSize);
+  h_y_p0->GetXaxis()->SetLabelSize(labelSize);
+  h_y_p1->GetXaxis()->SetLabelSize(labelSize);
+
+  h_by_pol->GetXaxis()->SetLabelSize(labelSize);
+  h_by_pol_avg->GetXaxis()->SetLabelSize(labelSize);
+  h_by_p0->GetXaxis()->SetLabelSize(labelSize);
+   //
+  h_b_pol->GetYaxis()->SetLabelSize(labelSize);
+  h_b_pol_avg->GetYaxis()->SetLabelSize(labelSize);
+  h_b_p0->GetYaxis()->SetLabelSize(labelSize);
+  h_b_p1->GetYaxis()->SetLabelSize(labelSize);
+
+  h_y_pol->GetYaxis()->SetLabelSize(labelSize);
+  h_y_pol_avg->GetYaxis()->SetLabelSize(labelSize);
+  h_y_p0->GetYaxis()->SetLabelSize(labelSize);
+  h_y_p1->GetYaxis()->SetLabelSize(labelSize);
+
+  h_by_pol->GetYaxis()->SetLabelSize(labelSize);
+  h_by_pol_avg->GetYaxis()->SetLabelSize(labelSize);
+  h_by_p0->GetYaxis()->SetLabelSize(labelSize);
 
 
   // draw

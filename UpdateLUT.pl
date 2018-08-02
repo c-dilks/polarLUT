@@ -73,19 +73,22 @@ print("RUNLIST = $goodruns_file \n\n");
 
 
 # execute SQL queries and produce data tables
+# DEPRECATED after 2017 network re-"organization"; see code in stardbFiles15, which 
+# must be run on onl05 machine
 # (note: run 15 has a problem where sometimes during a fill change, 2 entries are put in database for the same run, but with
 #  two different fill numbers; seems that the lower fill number matches the RLB; thus the query clause "entryTag=0" is used)
-system("${sqlcmd} \"SELECT runNumber,startRunTime,endRunTime FROM runDescriptor\" | uniq > times.list");
-if($year!=15) {
-  system("${sqlcmd} \"SELECT runNumber,blueFillNumber FROM beamInfo\" | uniq > fills.list");
-} else {
-  system("${sqlcmd} \"SELECT runNumber,blueFillNumber FROM beamInfo WHERE entryTag=0\" | uniq > fills.list");
-}
-
+#system("${sqlcmd} \"SELECT runNumber,startRunTime,endRunTime FROM runDescriptor\" | uniq > times.list");
+#if($year!=15) {
+  #system("${sqlcmd} \"SELECT runNumber,blueFillNumber FROM beamInfo\" | uniq > fills.list");
+#} else {
+  #system("${sqlcmd} \"SELECT runNumber,blueFillNumber FROM beamInfo WHERE entryTag=0\" | uniq > fills.list");
+#}
 
 # open data tables
-open(TIMES,"times.list") or die("ERROR: times.list not found");
-open(FILLS,"fills.list") or die("ERROR: fills.list not found");
+#open(TIMES,"times.list") or die("ERROR: times.list not found");
+#open(FILLS,"fills.list") or die("ERROR: fills.list not found");
+open(TIMES,"stardbFiles15/times.list") or die("ERROR: times.list not found");
+open(FILLS,"stardbFiles15/fills.list") or die("ERROR: fills.list not found");
 
 
 # read in list of good runs
@@ -101,13 +104,9 @@ foreach $line (<GOOD>) {
 
 # obtain polarimetry data table
 #system("curl ${url}  > polarimetry.html");
-if($year!=15) {
-  system("grep -A5000 \"<pre>\" polarimetry_${year}.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
-} else {
-  # for run 15, we also zero out "strikethrough" numbers, because these fills had incorrect spin patterns; zeroing out
-  # polarizations effectively removes them from spin analyses
-  system("grep -A5000 \"<pre>\" polarimetry_${year}.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<strike.*strike>/0.0 0.0 0.0 0.0/g' | sed 's/<[^>]*>//g' > polarimetry.dat.tmp");
-}
+# note that for run 15, some fills were marked as having "wrong fill pattern"; they should NOT be used for analysis!
+#  they are filtered out with 'grep -v wrong'
+system("grep -A5000 \"<pre>\" polarimetry_${year}.html | grep -B5000 \"</pre>\" | grep 1 | sed 's/<[^>]*>//g' | grep -v wrong > polarimetry.dat.tmp");
 
 open(POL_TMP,"polarimetry.dat.tmp") or die("ERROR: polarimetry.dat.tmp not found");
 open(POL,"> polarimetry.dat");
@@ -134,9 +133,8 @@ foreach $line (<POL_TMP>) {
     }
   } elsif($year==15) {
     # put zero polarization in for yellow beam during pA part of run15
-    if($fill==19003) { $line = "$line 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0"; }
-    elsif($fill >= 19000) {
-      $line = "$line 0.0 0.0 0.0 0.0";
+    if($fill<=18611 || $fill >= 19000) {
+      $line = "$line       0.0   0.0   0.0   0.0";
     }
   }
   print(POL "$line\n");
@@ -145,9 +143,10 @@ if($debug) {
   print("\n\nopening vimdiff to check to see if I filled zeroes in properly...\n");
   print("+/- symbols and nan's filtered out later\n");
   sleep 3;
-  system("vimdiff polarimetry.dat{,.tmp}");
+  system("vimdiff polarimetry.dat polarimetry.dat.tmp");
 }
 close(POL);
+
 
 
 # build fill number hash table
@@ -417,7 +416,7 @@ system("AppendLumiData.pl ${year} ${trigger}");
 my $rootfile = "pol_${year}.root";
 system("root -b -q -l BuildTree.C'(\"${rootfile}\",\"polar_by_run_with_lumi.dat\")'");
 
-system("mv fills.list times.list ${storage_dir}/");
+#system("cp fills.list times.list ${storage_dir}/");
 system("mv polarimetry.dat.tmp polarimetry.dat polar_by_run.dat polar_by_run_with_lumi.dat ${storage_dir}/");
 #system("rm polarimetry.html");
 

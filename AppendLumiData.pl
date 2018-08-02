@@ -22,7 +22,7 @@ switch($year) {
   }
   case 15 {
     $lumidir = ""; # not used
-    `./FetchRun15lumi.sh ${trigger}`;
+    #`./FetchRun15lumi.sh ${trigger}`; # use this if you're on RCAS
   }
   else {
     print("unknown year, terminating\n");
@@ -45,7 +45,8 @@ foreach $line (<POLDATA>) {
 
 # open lumi file
 if($year!=15) { $lumifile = $lumidir."/lum_perrun_FMS${trigger}.txt"; }
-else { $lumifile = "lumi_tmp.txt"; }
+#else { $lumifile = "lumi_tmp.txt"; }
+else { $lumifile = "lumi_${trigger}_15.txt"; }
 open(LUMI,$lumifile) or die("ERROR: $lumifile does not exist");
 
 # columns of luminosity tables:
@@ -348,4 +349,4 @@ foreach $line (<POLDATA>) {
 close(POLDATA_OUT);
 close(POLDATA);
 
-if($year==15) { `rm lumi_tmp.txt`; }
+#if($year==15) { `rm lumi_tmp.txt`; }
