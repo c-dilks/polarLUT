@@ -3,7 +3,7 @@ use Data::Dumper;
 use Switch;
 
 # if =1, use alternate run list (search for this variable below); if false, just uses goodruns_${year}.dat's run list
-my $USE_ALTERNATE_RUNLIST=0;
+my $USE_ALTERNATE_RUNLIST=1;
 
 # if =1; turns on extra debugging stuff 
 my $debug=0;
