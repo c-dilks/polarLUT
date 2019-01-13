@@ -10,12 +10,9 @@
 //
 //
 //
-// SYSTEMATICS NEED TO BE UPDATED FOR RUN 15!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//
-//
 //
 
-void ComputeOverallPol(TString filename="pol_99_analysed_runs.root") {
+void ComputeOverallPol(TString filename="pol_15_analysed_runs.root") {
   TFile * infile = new TFile(filename.Data(),"READ");
   TTree * tr = (TTree*) infile->Get("poltr");
 
@@ -78,18 +75,18 @@ void ComputeOverallPol(TString filename="pol_99_analysed_runs.root") {
   Float_t SYS_SCALE_prod;
   switch(year) {
     case 12:
-      NFILLS_AN_blue = 49; // (see table 6 of analysis note)
+      NFILLS_AN_blue = 49; // (see table 8 of analysis note)
       NFILLS_AN_yell = 49;
       NFILLS_AN_prod = 49; // use lesser of the two NFILLS_AN_{blue,yell}
-      SYS_SCALE_blue = 0.034; // (see table 5 of analysis note)
+      SYS_SCALE_blue = 0.034; // (see table 7 of analysis note)
       SYS_SCALE_yell = 0.034;
       SYS_SCALE_prod = 0.066;
       break;
     case 13:
-      NFILLS_AN_blue = 138; // (see table 6 of analysis note)
+      NFILLS_AN_blue = 138; // (see table 8 of analysis note)
       NFILLS_AN_yell = 139;
       NFILLS_AN_prod = 138; // use lesser of the two NFILLS_AN_{blue,yell}
-      SYS_SCALE_blue = 0.032; // (see table 5 of analysis note)
+      SYS_SCALE_blue = 0.032; // (see table 7 of analysis note)
       SYS_SCALE_yell = 0.033;
       SYS_SCALE_prod = 0.064;
       break;
@@ -100,6 +97,14 @@ void ComputeOverallPol(TString filename="pol_99_analysed_runs.root") {
       SYS_SCALE_blue = 0.034; // use larger uncertainty from runs 12 and 13 (see section 4.3.4)
       SYS_SCALE_yell = 0.034;
       SYS_SCALE_prod = 0.066;
+      break;
+    case 15:
+      NFILLS_AN_blue = 142; // (see table 8 of analysis note)
+      NFILLS_AN_yell = 142;
+      NFILLS_AN_prod = 142; // use lesser of the two NFILLS_AN_{blue,yell}
+      SYS_SCALE_blue = 0.030; // (see table 7 of analysis note)
+      SYS_SCALE_yell = 0.030;
+      SYS_SCALE_prod = 0.060;
       break;
     default:
       fprintf(stderr,"ERROR: unknown year\n");
@@ -147,7 +152,7 @@ void ComputeOverallPol(TString filename="pol_99_analysed_runs.root") {
     NFILLS,NFILLS_AN_blue,SIGMA_POL_blue,SIGMA_POL_CORR_blue);
   printf("& \\sigma_{\\mathbb{P}_Y,\\text{(fill-to-fill scale)}} = Re\\left[\\sqrt{1-%d/%d}\\right]\\cdot \\left[%.4f\\right] = %.4f \\\\\n",
     NFILLS,NFILLS_AN_yell,SIGMA_POL_yell,SIGMA_POL_CORR_yell);
-  printf("& \\sigma_{\\mathbb{P}_Y,\\text{(fill-to-fill scale)}} = Re\\left[\\sqrt{1-%d/%d}\\right]\\cdot \\left[%.4f\\right] = %.4f \\\\\n",
+  printf("& \\sigma_{\\mathbb{P}_B\\mathbb{P}_Y,\\text{(fill-to-fill scale)}} = Re\\left[\\sqrt{1-%d/%d}\\right]\\cdot \\left[%.4f\\right] = %.4f \\\\\n",
     NFILLS,NFILLS_AN_prod,SIGMA_POL_prod,SIGMA_POL_CORR_prod);
 
   printf("& \\mathbb{P}_B\\cdot\\sigma_{scale}(P_B)/P_B = %.4f \\cdot %.4f = %.4f \\\\\n",POL_blue,SYS_SCALE_blue,POL_blue*SYS_SCALE_blue);
